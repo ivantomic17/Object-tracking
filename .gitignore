@@ -90,6 +90,7 @@ yolov4.weights
 *.cfg
 results/
 output/
+outputs/
 *.txt
 *.data
 

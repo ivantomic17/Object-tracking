@@ -194,7 +194,7 @@ def main(_argv):
         scores = np.array([d.confidence for d in detections])
         classes = np.array([d.class_name for d in detections])
         indices = preprocessing.non_max_suppression(boxs, classes, nms_max_overlap, scores)
-        detections = [detections[i] for i in indices]       
+        detections = [detections[i] for i in indices]
 
         # Call the tracker
         tracker.predict()
@@ -206,13 +206,16 @@ def main(_argv):
                 continue 
             bbox = track.to_tlbr()
             class_name = track.get_class()
-            
+
+            classification_probbability = track.get_confidence()
+            classification_probbability = str(round(classification_probbability, 2))
+
         # draw bbox on screen
             color = colors[int(track.track_id) % len(colors)]
             color = [i * 255 for i in color]
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
-            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
-            cv2.putText(frame, class_name + "-" + str(track.track_id),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
+            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id))+len(" Prob: "))*17, int(bbox[1])), color, -1)
+            cv2.putText(frame, class_name + "-" + str(track.track_id) + " Prob:" + classification_probbability,(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
 
         # if enable info flag then print details about each track
             if FLAGS.info:
