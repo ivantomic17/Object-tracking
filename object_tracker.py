@@ -225,7 +225,7 @@ def main(_argv):
             bbox = track.to_tlbr()
             class_name = track.get_class()
             classification_probbability = track.get_confidence()
-
+            
             # Insert a track
             track_id = db_handler.insert_track(track.track_id)
             # Insert a frame-track relationship with location and probability
