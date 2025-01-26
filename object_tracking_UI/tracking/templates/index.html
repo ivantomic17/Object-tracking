@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object tracking curve</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            margin: 20px auto;
+            text-align: center;
+        }
+        label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        select {
+            padding: 5px;
+            font-size: 1rem;
+            margin-right: 20px;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            text-align: center;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 80%;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Object tracking curve</h1>
+
+    <!-- Video and Object selection dropdowns -->
+    <form method="POST" id="form">
+        {% csrf_token %}
+        <label for="video_id">Select object tracking run:</label>
+        <select name="video_id" id="video_id">
+            {% for video_run in available_video_runs %}
+                <option value="{{ video_run.0 }}" {% if video_run.0 == video_id %}selected{% endif %}>{{ video_run.0 }} - {{ video_run.1 }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="object_id">Select Object ID:</label>
+        <select name="object_id" id="object_id">
+            {% for obj in available_objects %}
+                <option value="{{ obj.0 }}" {% if obj.0 == object_id %}selected{% endif %}>Object {{ obj.0 }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <!-- Display the canvas -->
+    {% if img_base64 %}
+        <h2>Object Movement Path</h2>
+        <img src="data:image/png;base64,{{ img_base64 }}" alt="Object Movement Path" id="canvas"/>
+    {% endif %}
+
+    <!-- Display the table -->
+    {% if table_data %}
+        <h2>Object Movement Data</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Frame</th>
+                    <th>X Coordinate</th>
+                    <th>Y Coordinate</th>
+                    <th>Probability</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in table_data %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ row.x }}</td>
+                        <td>{{ row.y }}</td>
+                        <td>{{ row.probability }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <script type="text/javascript">
+        // Update object dropdown dynamically when video_id changes
+        $('#video_id').change(function () {
+            var video_id = $(this).val(); // Get selected video_id
+            var objectDropdown = $('#object_id'); // Get the object_id dropdown
+
+            // Fetch the objects for the selected video
+            $.ajax({
+                url: "{% url 'fetch_objects' 0 %}".replace('0', video_id),
+                method: 'GET',
+                success: function (response) {
+                    objectDropdown.empty(); // Clear existing options in the object dropdown
+
+                    // Populate the object dropdown with new options
+                    $.each(response.objects, function (index, object) {
+                        objectDropdown.append('<option value="' + object[0] + '">Object ' + object[0] + '</option>');
+                    });
+
+                    // Automatically select the first object (if available)
+                    if (response.objects.length > 0) {
+                        objectDropdown.val(response.objects[0][0]); // Select the first object in the list
+                    }
+
+                    // Automatically trigger form submission to update the canvas and table
+                    $('#form').submit();
+                }
+            });
+        });
+
+        // Trigger form submission when object_id changes
+        $('#object_id').change(function () {
+            $('#form').submit();
+        });
+    </script>
+</body>
+</html>
