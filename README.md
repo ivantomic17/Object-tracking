@@ -52,5 +52,5 @@ python manage.py runserver
 <p align="center"><img src="data/helpers/probability.png"\></p>
 
 ## Demo of web UI
-<p align="center"><img src="data/helpers/web_UI"\></p>
-<p align="center"><img src="data/helpers/web_UI_probability"\></p>
+<p align="center"><img src="data/helpers/web_UI.png"\></p>
+<p align="center"><img src="data/helpers/web_UI_probability.png"\></p>
