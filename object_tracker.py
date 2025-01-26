@@ -22,6 +22,7 @@ from tensorflow.compat.v1 import InteractiveSession
 from deep_sort import preprocessing, nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
+from database_handler import DatabaseHandler
 from tools import generate_detections as gdet
 flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
 flags.DEFINE_string('weights', './checkpoints/yolov4-416',
@@ -59,6 +60,19 @@ def main(_argv):
     STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config(FLAGS)
     input_size = FLAGS.size
     video_path = FLAGS.video
+
+    # Initialize the database handler with your SQLite file
+    database = 'database/object_tracking_sql.db'
+    db_handler = DatabaseHandler(database)
+    # Connect to the database
+    db_handler.connect()
+    # Create tables if not already created
+    db_handler.create_tables()
+    # Insert a new object tracking run
+    if FLAGS.output:
+        object_tracking_run_id = db_handler.insert_object_tracking_run(video_path, FLAGS.output)
+    else:
+        object_tracking_run_id = db_handler.insert_object_tracking_run(video_path)
 
     # load tflite model if flag is set
     if FLAGS.framework == 'tflite':
@@ -102,6 +116,10 @@ def main(_argv):
             break
         frame_num +=1
         print('Frame #: ', frame_num)
+
+        # Insert a frame to database
+        frame_id = db_handler.insert_frame(frame_num, object_tracking_run_id)
+
         frame_size = frame.shape[:2]
         image_data = cv2.resize(frame, (input_size, input_size))
         image_data = image_data / 255.
@@ -194,7 +212,7 @@ def main(_argv):
         scores = np.array([d.confidence for d in detections])
         classes = np.array([d.class_name for d in detections])
         indices = preprocessing.non_max_suppression(boxs, classes, nms_max_overlap, scores)
-        detections = [detections[i] for i in indices]       
+        detections = [detections[i] for i in indices]
 
         # Call the tracker
         tracker.predict()
@@ -206,13 +224,21 @@ def main(_argv):
                 continue 
             bbox = track.to_tlbr()
             class_name = track.get_class()
+            classification_probbability = track.get_confidence()
             
+            # Insert a track
+            track_id = db_handler.insert_track(track.track_id)
+            # Insert a frame-track relationship with location and probability
+            db_handler.insert_frame_track(frame_id, track_id, classification_probbability,int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
+
+            classification_probbability = str(round(classification_probbability, 2))
+
         # draw bbox on screen
             color = colors[int(track.track_id) % len(colors)]
             color = [i * 255 for i in color]
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
-            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
-            cv2.putText(frame, class_name + "-" + str(track.track_id),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
+            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id))+len(" Prob: "))*17, int(bbox[1])), color, -1)
+            cv2.putText(frame, class_name + "-" + str(track.track_id) + " Prob:" + classification_probbability,(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
 
         # if enable info flag then print details about each track
             if FLAGS.info:
@@ -232,6 +258,9 @@ def main(_argv):
             out.write(result)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     cv2.destroyAllWindows()
+
+    # Close the connection when done
+    db_handler.close()
 
 if __name__ == '__main__':
     try:
