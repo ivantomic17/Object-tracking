@@ -6,7 +6,6 @@ import matplotlib
 from django.http import JsonResponse
 from django.shortcuts import render
 
-
 def index(request):
     video_id = 1
     object_id = 1
@@ -54,6 +53,7 @@ def generate_object_curve_image(db_file, video_id, object_id):
         y_coords = [loc[1] for loc in db_data]
 
         table_data = [{'x': loc[0], 'y': loc[1], 'probability': loc[2]} for loc in db_data]
+
         matplotlib.use('agg')
         plt.figure(figsize=(10, 6))
         plt.xlim(0, 1920)
