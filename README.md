@@ -3,6 +3,18 @@ Object tracking implemented with YOLOv4, DeepSort, and TensorFlow.
 Based on the original project by The AI Guy.
 Source: https://github.com/theAIGuysCode/yolov4-deepsort
 
+## Implemented features
+ - Display Classification Probability: Shows the classification probability alongside each object ID.
+ - SQL Database Integration: Saves tracking data to an SQL database.
+ - Web-Based UI: Provides an interactive interface to visualize object paths for a selected video tracking run and object ID.
+
+## Demo of Object Tracker on Persons with probability
+<p align="center"><img src="data/helpers/probability.png"\></p>
+
+## Demo of web UI
+<p align="center"><img src="data/helpers/web_UI"\></p>
+<p align="center"><img src="data/helpers/web_UI_probability.png"\></p>
+
 ## Getting Started
 Clone repository
 ```bash
@@ -42,15 +54,3 @@ Run the Web Server
 ```
 python manage.py runserver
 ```
-
-## Implemented features
- - Display Classification Probability: Shows the classification probability alongside each object ID.
- - SQL Database Integration: Saves tracking data to an SQL database.
- - Web-Based UI: Provides an interactive interface to visualize object paths for a selected video tracking run and object ID.
-
-## Demo of Object Tracker on Persons with probability
-<p align="center"><img src="data/helpers/probability.png"\></p>
-
-## Demo of web UI
-<p align="center"><img src="data/helpers/web_UI.png"\></p>
-<p align="center"><img src="data/helpers/web_UI_probability.png"\></p>
